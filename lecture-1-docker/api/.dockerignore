@@ -1,0 +1,26 @@
+# Version control
+.git
+.gitignore
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# IDE and OS files
+.idea
+.vscode
+.DS_Store
+
+# Go build and test artifacts
+bin/
+dist/
+tmp/
+*.test
+*.out
+*.prof
+coverage/
+coverage.*
+
+# Local logs
+*.log
