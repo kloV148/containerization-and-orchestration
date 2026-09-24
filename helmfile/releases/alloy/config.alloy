@@ -10,7 +10,7 @@ discovery.kubernetes "api" {
 
   selectors {
     role  = "pod"
-    label = "app.kubernetes.io/part-of=lab2-observability"
+    label = "app.kubernetes.io/component=api"
   }
 
   namespaces {
@@ -35,6 +35,11 @@ discovery.relabel "api" {
   rule {
     source_labels = ["__meta_kubernetes_pod_container_name"]
     target_label  = "container"
+  }
+
+  rule {
+    source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_part_of"]
+    target_label  = "part_of"
   }
 }
 

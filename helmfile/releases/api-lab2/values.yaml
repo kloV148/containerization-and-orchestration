@@ -5,11 +5,11 @@ image:
 
 env:
   OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger.observability.svc.cluster.local:4318"
-  OTEL_SERVICE_NAME: "api"
+  OTEL_SERVICE_NAME: "api-lab2"
 
 podLabels:
   app.kubernetes.io/component: api
-  app.kubernetes.io/part-of: lab2-observability
+  app.kubernetes.io/part-of: lab2
 
 # Нужно для работы prometheus discovery
 podAnnotations:
@@ -22,11 +22,11 @@ ingress:
   className: "traefik"
   annotations: {}
   hosts:
-    - host: api.local
+    - host: api-lab2.local
       paths:
         - path: /
           pathType: Prefix
   tls: []
 
-nameOverride: api
-fullnameOverride: api
+nameOverride: api-lab2
+fullnameOverride:  api-lab2

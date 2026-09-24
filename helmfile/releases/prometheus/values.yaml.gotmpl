@@ -3,6 +3,16 @@ server:
     repository: quay.io/prometheus/prometheus
     tag: "v3.13.2"
 
+scrapeConfigs:
+  kubernetes-pods:
+    post_relabel_configs: |
+      - source_labels:
+          - __meta_kubernetes_pod_label_app_kubernetes_io_component
+        target_label: component
+      - source_labels:
+          - __meta_kubernetes_pod_label_app_kubernetes_io_part_of
+        target_label: part_of
+
 serverFiles:
   alerting_rules.yml:
     groups:
@@ -11,12 +21,18 @@ serverFiles:
           - alert: HighErrorRate
             expr: >-
               (
-                sum(rate(http_errors_total{app_kubernetes_io_name="api", app_kubernetes_io_part_of="lab2-observability"}[5m]))
+                sum by (component, part_of) (
+                  rate(http_errors_total{component="api"}[5m])
+                )
                 /
-                sum(rate(http_requests_total{app_kubernetes_io_name="api", app_kubernetes_io_part_of="lab2-observability"}[5m]))
+                sum by (component, part_of) (
+                  rate(http_requests_total{component="api"}[5m])
+                )
               ) > 0.5
               and
-              sum(increase(http_requests_total{app_kubernetes_io_name="api", app_kubernetes_io_part_of="lab2-observability"}[5m])) >= 10
+              sum by (component, part_of) (
+                increase(http_requests_total{component="api"}[5m])
+              ) >= 10
             for: 5m
             labels:
               severity: "Critical"
@@ -26,9 +42,9 @@ serverFiles:
             expr: >-
               histogram_quantile(
                 0.95,
-                sum by (le) (
+                sum by (le, component, part_of) (
                   rate(http_request_duration_seconds_bucket{
-                    app_kubernetes_io_name="api", app_kubernetes_io_part_of="lab2-observability"
+                    component="api"
                   }[5m])
                 )
               ) > 5
@@ -39,9 +55,9 @@ serverFiles:
               summary: "High responce latency"
           - alert: ApiDown
             expr: >-
-              up{app_kubernetes_io_name="api", app_kubernetes_io_part_of="lab2-observability"} == 0
+              up{component="api"} == 0
               or
-              absent(up{app_kubernetes_io_name="api", app_kubernetes_io_part_of="lab2-observability"})
+              absent(up{component="api"})
             for: 5m
             labels:
               severity: "Critical"
