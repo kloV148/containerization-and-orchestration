@@ -1,15 +1,15 @@
 image:
-  repository: api-lab2
+  repository: api-lab3
   pullPolicy: IfNotPresent
   tag: "1.0.0"
 
 env:
   OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger.observability.svc.cluster.local:4318"
-  OTEL_SERVICE_NAME: "api-lab2"
+  OTEL_SERVICE_NAME: "api-lab3"
 
 podLabels:
   app.kubernetes.io/component: api
-  app.kubernetes.io/part-of: lab2
+  app.kubernetes.io/part-of: lab3
 
 # Нужно для работы prometheus discovery
 podAnnotations:
@@ -17,16 +17,19 @@ podAnnotations:
   prometheus.io/path: /metrics
   prometheus.io/port: "8080"
 
+securityContext:
+  privileged: true
+
 ingress:
   enabled: true
   className: "traefik"
   annotations: {}
   hosts:
-    - host: api-lab2.local
+    - host: api-lab3.local
       paths:
         - path: /
           pathType: Prefix
   tls: []
 
-nameOverride: api-lab2
-fullnameOverride:  api-lab2
+nameOverride: api-lab3
+fullnameOverride: api-lab3
