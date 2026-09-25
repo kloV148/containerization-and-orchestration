@@ -1,0 +1,43 @@
+apiVersion: policies.kyverno.io/v1
+kind: NamespacedMutatingPolicy
+metadata:
+  name: set-limits
+  namespace: {{ .Values.namespace }}
+spec:
+  autogen:
+    podControllers:
+      controllers:
+        - deployments
+        - statefulsets
+        - daemonsets
+        - jobs
+        - cronjobs
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ['']
+        apiVersions: ['v1']
+        operations: ['CREATE', 'UPDATE']
+        resources: ['pods']
+  mutations:
+    - patchType: ApplyConfiguration
+      applyConfiguration:
+        expression: >
+          Object{
+            spec: Object.spec{
+              containers: object.spec.containers.map(container,
+                (!has(container.resources) || !has(container.resources.limits))
+                  ? Object.spec.containers{
+                    name: container.name,
+                    resources: Object.spec.containers.resources{
+                      limits: {
+                        "cpu": "250m",
+                        "memory": "128Mi"
+                      }
+                    }
+                  }
+                  : Object.spec.containers{
+                    name: container.name
+                  }
+                ) 
+              }
+            }

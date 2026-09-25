@@ -1,5 +1,5 @@
 image:
-  repository: api-lab3
+  repository: k3d-registry.localhost:5000/api-lab3
   pullPolicy: IfNotPresent
   tag: "1.0.0"
 

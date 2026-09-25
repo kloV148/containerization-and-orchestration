@@ -1,0 +1,23 @@
+apiVersion: policies.kyverno.io/v1
+kind: NamespacedImageValidatingPolicy
+metadata:
+  name: check-image-registry
+  namespace: {{ .Values.namespace }}
+spec:
+  validationActions:
+    - Deny
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ['']
+        apiVersions: ['v1']
+        operations: ['CREATE', 'UPDATE']
+        resources: ['pods']
+  matchImageReferences:
+    - glob: '*'
+  validations:
+    - message: 'Only images from the trusted local registry are allowed.'
+      expression: >-
+        images.containers.all(
+          image,
+          image.registry == {{ .Values.imageValidation.allowedRegistry | quote }}
+        )

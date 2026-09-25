@@ -1,0 +1,35 @@
+apiVersion: policies.kyverno.io/v1
+kind: GeneratingPolicy
+metadata:
+  name: default-network-policy
+spec:
+  evaluation:
+    generateExisting:
+      enabled: true
+    synchronize:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ['']
+        apiVersions: ['v1']
+        operations: ['CREATE', 'UPDATE']
+        resources: ['namespaces']
+  matchConditions:
+    - name: target-namespace
+      expression: 'object.metadata.name == {{ .Values.namespace | quote }}'
+  variables:
+    - name: nsName
+      expression: 'object.metadata.name'
+  generate:
+    - template:
+        interpolate: cel
+        value: |
+          apiVersion: networking.k8s.io/v1
+          kind: NetworkPolicy
+          metadata:
+            name: default-deny-ingress
+            namespace: (( variables.nsName ))
+          spec:
+            podSelector: {}
+            policyTypes:
+              - Ingress
