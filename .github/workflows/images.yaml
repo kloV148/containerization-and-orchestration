@@ -1,0 +1,22 @@
+name: Build APIs
+
+on:
+  push:
+    # paths:
+    #   - 'lecture-*/api/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        api:
+          - lecture-2-observability/api
+          - lecture-3-kubernetes-control-plane/api
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build ${{ matrix.api }}
+        run: docker build "${{ matrix.api }}"
