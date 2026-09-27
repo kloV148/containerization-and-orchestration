@@ -2,8 +2,8 @@ name: Build APIs
 
 on:
   push:
-    # paths:
-    #   - 'lecture-*/api/**'
+    paths:
+      - 'lecture-*/api/**'
 
 jobs:
   build:
