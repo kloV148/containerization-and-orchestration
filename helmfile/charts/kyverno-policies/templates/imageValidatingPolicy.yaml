@@ -12,12 +12,19 @@ spec:
         apiVersions: ['v1']
         operations: ['CREATE', 'UPDATE']
         resources: ['pods']
-  matchImageReferences:
-    - glob: '*'
+  validationConfigurations:
+    mutateDigest: true
+    required: true
+    verifyDigest: true
+  attestors:
+    - name: cosign
+      cosign:
+        keyless:
+          identities:
+            - subjectRegExp: '^https://github\.com/kloV148/containerization-and-orchestration/\.github/workflows/images\.yaml@refs/heads/.+$'
+              issuer: 'https://token.actions.githubusercontent.com'
   validations:
-    - message: 'Only images from the trusted local registry are allowed.'
-      expression: >-
-        images.containers.all(
-          image,
-          image.registry == {{ .Values.imageValidation.allowedRegistry | quote }}
-        )
+    # verifyImageSignatures возвращает массив кол-ва проверенных подписей, в all(e, e > 0) проверяем, что каждый образ больше 0 подписей имеет
+    - expression: >-
+        images.containers.map(image, verifyImageSignatures(image, [attestors.cosign])).all(e, e > 0)
+      message: "failed to verify image with cosign cert"

@@ -1,4 +1,1 @@
 namespace: api
-
-imageValidation:
-  allowedRegistry: k3d-registry.localhost:5000

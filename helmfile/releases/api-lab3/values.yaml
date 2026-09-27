@@ -1,7 +1,7 @@
 image:
-  repository: k3d-registry.localhost:5000/api-lab3
+  repository: ghcr.io/klov148/api-lab3
   pullPolicy: IfNotPresent
-  tag: "1.0.0"
+  tag: "latest"
 
 env:
   OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger.observability.svc.cluster.local:4318"
@@ -16,9 +16,6 @@ podAnnotations:
   prometheus.io/scrape: "true"
   prometheus.io/path: /metrics
   prometheus.io/port: "8080"
-
-securityContext:
-  privileged: true
 
 ingress:
   enabled: true
