@@ -7,22 +7,23 @@ image:
 
 env:
   POLL_INTERVAL: "1s"
-  PGHOST: "api-lab3-rw"
+  PGHOST: "postgres-lab3-rw"
   PGPORT: "5432"
   PGDATABASE: "app"
   PGSSLMODE: "disable"
 
 secretEnv:
   PGUSER:
-    name: api-lab3-secret
+    name: postgres-lab3-secret
     key: username
   PGPASSWORD:
-    name: api-lab3-secret
+    name: postgres-lab3-secret
     key: password
 
 podLabels:
   app.kubernetes.io/component: worker
-  app.kubernetes.io/part-of: lab3
+  app.kubernetes.io/part-of: shop
+  app.kubernetes.io/lab: lab3
 
 podAnnotations:
   prometheus.io/scrape: "true"

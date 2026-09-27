@@ -9,7 +9,8 @@ env:
 
 podLabels:
   app.kubernetes.io/component: api
-  app.kubernetes.io/part-of: lab2
+  app.kubernetes.io/part-of: shop
+  app.kubernetes.io/lab: lab2
 
 # Нужно для работы prometheus discovery
 podAnnotations:
