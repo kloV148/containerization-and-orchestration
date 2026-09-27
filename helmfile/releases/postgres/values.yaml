@@ -1,0 +1,18 @@
+enabled: true
+instances: 1
+bootstrap:
+  initdb:
+    database: app
+    owner: app
+    secret:
+      name: api-lab3-secret
+storage:
+  size: 1Gi
+  storageClass: local-path
+
+secret:
+  enabled: true
+  name: api-lab3-secret
+  type: kubernetes.io/basic-auth
+
+fullnameOverride: api-lab3

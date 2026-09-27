@@ -10,10 +10,18 @@ releases:
   #   namespace: api
   #   chart: ../charts/api-universal
 
+  - name: postgres
+    namespace: api
+    chart: ../charts/postgres
+
   - name: api-lab3
     namespace: api
     chart: ../charts/api-universal
+    needs:
+      - api/postgres
 
   - name: worker-lab3
     namespace: api
     chart: ../charts/api-universal
+    needs:
+      - api/postgres

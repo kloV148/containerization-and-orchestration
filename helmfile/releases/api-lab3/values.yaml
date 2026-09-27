@@ -4,8 +4,20 @@ image:
   tag: "latest"
 
 env:
+  PGHOST: "api-lab3-rw"
+  PGPORT: "5432"
+  PGDATABASE: "app"
+  PGSSLMODE: "disable"
   OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger.observability.svc.cluster.local:4318"
   OTEL_SERVICE_NAME: "api-lab3"
+
+secretEnv:
+  PGUSER:
+    name: api-lab3-secret
+    key: username
+  PGPASSWORD:
+    name: api-lab3-secret
+    key: password
 
 podLabels:
   app.kubernetes.io/component: api
@@ -37,5 +49,5 @@ resources:
     cpu: 100m
     memory: 128Mi
   requests:
-    cpu: 100m
-    memory: 128Mi
+    cpu: 50m
+    memory: 64Mi

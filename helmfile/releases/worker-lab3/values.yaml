@@ -7,6 +7,18 @@ image:
 
 env:
   POLL_INTERVAL: "1s"
+  PGHOST: "api-lab3-rw"
+  PGPORT: "5432"
+  PGDATABASE: "app"
+  PGSSLMODE: "disable"
+
+secretEnv:
+  PGUSER:
+    name: api-lab3-secret
+    key: username
+  PGPASSWORD:
+    name: api-lab3-secret
+    key: password
 
 podLabels:
   app.kubernetes.io/component: worker
@@ -22,8 +34,8 @@ resources:
     cpu: 100m
     memory: 128Mi
   requests:
-    cpu: 100m
-    memory: 128Mi
+    cpu: 50m
+    memory: 64Mi
 
 strategy:
   type: RollingUpdate
@@ -33,4 +45,3 @@ strategy:
 
 nameOverride: worker-lab3
 fullnameOverride: worker-lab3
-
