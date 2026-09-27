@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'lecture-*/api/**'
+      - 'lecture-*/worker/**'
 
 jobs:
   build:
@@ -14,6 +15,7 @@ jobs:
         include:
           - { context: lecture-2-observability/api, image: "ghcr.io/klov148/api-lab2" }
           - { context: lecture-3-kubernetes-control-plane/api, image: "ghcr.io/klov148/api-lab3" }
+          - { context: lecture-3-kubernetes-control-plane/worker, image: "ghcr.io/klov148/worker-lab3" }
           
     permissions:
       contents: read
