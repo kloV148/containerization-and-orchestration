@@ -19,7 +19,7 @@ jobs:
       contents: read
       packages: write
       id-token: write
-      
+
     steps:
       - uses: actions/checkout@v7
         with:
@@ -44,6 +44,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Build and push
+        id: build-and-push
         uses: docker/build-push-action@v7
         with:
           context: "${{ matrix.context }}"
@@ -52,3 +53,13 @@ jobs:
           tags: |
             ${{ matrix.image }}:latest
             ${{ matrix.image }}:sha-${{ github.sha }}
+
+      - name: Sign and verify
+        env:
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+        run: |
+          cosign sign --yes "${{ matrix.image }}@${DIGEST}"
+
+          cosign verify "${{ matrix.image }}@${DIGEST}" \
+            --certificate-identity="https://github.com/${GITHUB_REPOSITORY}/.github/workflows/images.yaml@${GITHUB_REF}" \
+            --certificate-oidc-issuer="https://token.actions.githubusercontent.com"
