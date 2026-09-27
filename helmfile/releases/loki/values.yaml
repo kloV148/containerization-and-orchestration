@@ -22,6 +22,12 @@ singleBinary:
     enabled: true
     size: 5Gi
 
+chunksCache:
+  enabled: false
+
+resultsCache:
+  enabled: false
+
 backend:
   replicas: 0
 read:
