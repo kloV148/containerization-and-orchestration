@@ -70,6 +70,24 @@ func TestProcessOnceHandlesEmptyQueueAndErrors(t *testing.T) {
 	}
 }
 
+func TestHTTPMetrics(t *testing.T) {
+	registry := prometheus.NewRegistry()
+	handler := newHandler(true, registry)
+	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/health", nil))
+
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/metrics", nil))
+	for _, metric := range []string{
+		`http_requests_total{code="503",method="GET",path="/health"} 1`,
+		`http_errors_total{code="503",method="GET",path="/health"} 1`,
+		`http_request_duration_seconds_count{code="503",method="GET",path="/health"} 1`,
+	} {
+		if !strings.Contains(response.Body.String(), metric) {
+			t.Fatalf("metric %q is missing: %s", metric, response.Body.String())
+		}
+	}
+}
+
 func TestPollInterval(t *testing.T) {
 	t.Setenv("POLL_INTERVAL", "250ms")
 	if got := pollInterval(); got != 250*time.Millisecond {

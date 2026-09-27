@@ -94,6 +94,7 @@ type app struct {
 	store         orderStore
 	healthFail    bool
 	requests      *prometheus.CounterVec
+	errors        *prometheus.CounterVec
 	duration      *prometheus.HistogramVec
 	ordersCreated prometheus.Counter
 }
@@ -105,17 +106,20 @@ func newApp(logger *slog.Logger, store orderStore, healthFail bool) (*app, http.
 		store:      store,
 		healthFail: healthFail,
 		requests: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: "shop_http_requests_total", Help: "Completed API requests.",
+			Name: "http_requests_total", Help: "Completed API requests.",
+		}, []string{"method", "path", "code"}),
+		errors: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "http_errors_total", Help: "Completed API requests with a 5xx response.",
 		}, []string{"method", "path", "code"}),
 		duration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Name: "shop_http_request_duration_seconds", Help: "API request latency in seconds.",
+			Name: "http_request_duration_seconds", Help: "API request latency in seconds.",
 			Buckets: prometheus.DefBuckets,
 		}, []string{"method", "path", "code"}),
 		ordersCreated: prometheus.NewCounter(prometheus.CounterOpts{
 			Name: "shop_orders_created_total", Help: "Orders successfully created by the API.",
 		}),
 	}
-	registry.MustRegister(a.requests, a.duration, a.ordersCreated)
+	registry.MustRegister(a.requests, a.errors, a.duration, a.ordersCreated)
 
 	mux := http.NewServeMux()
 	mux.Handle("GET /health", a.instrument("/health", http.HandlerFunc(a.health)))
@@ -133,6 +137,9 @@ func (a *app) instrument(path string, next http.Handler) http.Handler {
 		next.ServeHTTP(recorder, r)
 		code := strconv.Itoa(recorder.status)
 		a.requests.WithLabelValues(r.Method, path, code).Inc()
+		if recorder.status >= http.StatusInternalServerError {
+			a.errors.WithLabelValues(r.Method, path, code).Inc()
+		}
 		a.duration.WithLabelValues(r.Method, path, code).Observe(time.Since(start).Seconds())
 		a.logger.InfoContext(r.Context(), "request completed",
 			"method", r.Method,

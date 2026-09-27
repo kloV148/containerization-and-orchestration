@@ -136,10 +136,62 @@ func healthHandler(healthFail bool) http.HandlerFunc {
 }
 
 func newHandler(healthFail bool, registry *prometheus.Registry) http.Handler {
+	requests := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "http_requests_total", Help: "Completed worker HTTP requests.",
+	}, []string{"method", "path", "code"})
+	errors := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "http_errors_total", Help: "Completed worker HTTP requests with a 5xx response.",
+	}, []string{"method", "path", "code"})
+	duration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name: "http_request_duration_seconds", Help: "Worker HTTP request latency in seconds.",
+		Buckets: prometheus.DefBuckets,
+	}, []string{"method", "path", "code"})
+	registry.MustRegister(requests, errors, duration)
+
 	mux := http.NewServeMux()
-	mux.Handle("GET /health", healthHandler(healthFail))
+	mux.Handle("GET /health", instrumentHTTP("/health", healthHandler(healthFail), requests, errors, duration))
 	mux.Handle("GET /metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
 	return mux
+}
+
+func instrumentHTTP(
+	path string,
+	next http.Handler,
+	requests, errors *prometheus.CounterVec,
+	duration *prometheus.HistogramVec,
+) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		recorder := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
+		next.ServeHTTP(recorder, r)
+		code := strconv.Itoa(recorder.status)
+		requests.WithLabelValues(r.Method, path, code).Inc()
+		if recorder.status >= http.StatusInternalServerError {
+			errors.WithLabelValues(r.Method, path, code).Inc()
+		}
+		duration.WithLabelValues(r.Method, path, code).Observe(time.Since(start).Seconds())
+	})
+}
+
+type statusRecorder struct {
+	http.ResponseWriter
+	status      int
+	wroteHeader bool
+}
+
+func (w *statusRecorder) WriteHeader(code int) {
+	if !w.wroteHeader {
+		w.status = code
+		w.wroteHeader = true
+		w.ResponseWriter.WriteHeader(code)
+	}
+}
+
+func (w *statusRecorder) Write(body []byte) (int, error) {
+	if !w.wroteHeader {
+		w.WriteHeader(http.StatusOK)
+	}
+	return w.ResponseWriter.Write(body)
 }
 
 func listenPort() string {

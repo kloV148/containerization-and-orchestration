@@ -138,8 +138,19 @@ func TestMetrics(t *testing.T) {
 	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/health", nil))
 	metrics := httptest.NewRecorder()
 	handler.ServeHTTP(metrics, httptest.NewRequest(http.MethodGet, "/metrics", nil))
-	if !strings.Contains(metrics.Body.String(), `shop_http_requests_total{code="200",method="GET",path="/health"} 1`) {
+	if !strings.Contains(metrics.Body.String(), `http_requests_total{code="200",method="GET",path="/health"} 1`) {
 		t.Fatalf("health request metric is missing: %s", metrics.Body.String())
+	}
+	if !strings.Contains(metrics.Body.String(), `http_request_duration_seconds_count{code="200",method="GET",path="/health"} 1`) {
+		t.Fatalf("health duration metric is missing: %s", metrics.Body.String())
+	}
+
+	failingHandler := testHandler(&memoryStore{}, true)
+	failingHandler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/health", nil))
+	failingMetrics := httptest.NewRecorder()
+	failingHandler.ServeHTTP(failingMetrics, httptest.NewRequest(http.MethodGet, "/metrics", nil))
+	if !strings.Contains(failingMetrics.Body.String(), `http_errors_total{code="503",method="GET",path="/health"} 1`) {
+		t.Fatalf("health error metric is missing: %s", failingMetrics.Body.String())
 	}
 }
 
