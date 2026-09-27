@@ -158,3 +158,5 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+strategy: {}
