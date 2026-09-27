@@ -3,16 +3,6 @@ server:
     repository: quay.io/prometheus/prometheus
     tag: "v3.13.2"
 
-scrapeConfigs:
-  kubernetes-pods:
-    post_relabel_configs: |
-      - source_labels:
-          - __meta_kubernetes_pod_label_app_kubernetes_io_component
-        target_label: component
-      - source_labels:
-          - __meta_kubernetes_pod_label_app_kubernetes_io_part_of
-        target_label: part_of
-
 serverFiles:
   alerting_rules.yml:
     groups:

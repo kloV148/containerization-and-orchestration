@@ -1,0 +1,19 @@
+{{- if .Values.pgCluster.enabled -}}
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ include "api.fullname" . }}
+  labels:
+    {{- include "api.labels" . | nindent 4 }}
+spec:
+  instances: {{ .Values.pgCluster.instances }}
+  imageName: {{ .Values.pgCluster.image }}
+  {{- with .Values.pgCluster.bootstrap }}
+  bootstrap:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.pgCluster.storage }}
+  storage:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

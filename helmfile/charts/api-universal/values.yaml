@@ -14,6 +14,14 @@ image:
 
 # Additional environment variables and Pod labels.
 env: {}
+secretEnv: {}
+secret:
+  enabled: false
+  name: ""
+  type: Opaque
+  annotations: {}
+  data: {}
+  stringData: {}
 podLabels: {}
 
 # This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
@@ -160,3 +168,11 @@ tolerations: []
 affinity: {}
 
 strategy: {}
+
+pgCluster: 
+  image: ghcr.io/cloudnative-pg/postgresql:18.6-system-trixie
+  enabled: false
+  instances: 1
+  bootstrap: {}
+  storage: 
+    size: 1Gi

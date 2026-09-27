@@ -44,11 +44,18 @@ spec:
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- with .Values.env  }}
+          {{- if or .Values.env .Values.secretEnv }}
           env:
-            {{- range $key, $val := .}}
-            - name: {{ $key}}
+            {{- range $key, $val := .Values.env }}
+            - name: {{ $key }}
               value: {{ $val | quote }}
+            {{- end }}
+            {{- range $key, $val := .Values.secretEnv }}
+            - name: {{ $key }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $val.name }}
+                  key: {{ $val.key }}
             {{- end }}
           {{- end }}
           ports:

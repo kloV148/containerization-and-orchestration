@@ -1,0 +1,23 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/cloudnative-pg/cloudnative-pg
+  pullPolicy: IfNotPresent
+  tag: "1.30.1"
+
+crds:
+  create: true
+
+config:
+  clusterWide: true
+
+monitoring:
+  podMonitorEnabled: false
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
