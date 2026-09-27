@@ -30,3 +30,12 @@ ingress:
 
 nameOverride: api-lab3
 fullnameOverride: api-lab3
+
+replicaCount: 3
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi

@@ -1,0 +1,35 @@
+replicaCount: 2
+
+image:
+  repository: ghcr.io/klov148/worker-lab3
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+env:
+  POLL_INTERVAL: "1s"
+
+podLabels:
+  app.kubernetes.io/component: worker
+  app.kubernetes.io/part-of: lab3
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/path: /metrics
+  prometheus.io/port: "8080"
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 0
+    maxSurge: 1
+
+nameOverride: worker-lab3
+fullnameOverride: worker-lab3
