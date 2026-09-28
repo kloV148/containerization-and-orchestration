@@ -1,0 +1,46 @@
+crds:
+  enabled: true
+
+defaultRules:
+  create: false
+
+kubernetesServiceMonitors:
+  enabled: false
+
+kubeStateMetrics:
+  enabled: false
+
+nodeExporter:
+  enabled: false
+
+grafana:
+  enabled: true
+  image:
+    tag: "13.2.2-distroless"
+  sidecar:
+    image:
+      tag: "2.11.2"
+
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    image:
+      tag: "v0.34.1"
+
+prometheusOperator:
+  enabled: true
+  image:
+    tag: "v0.94.1"
+  prometheusConfigReloader:
+    image:
+      tag: "v0.94.1"
+  admissionWebhooks:
+    patch:
+      image:
+        tag: "1.8.8"
+
+prometheus:
+  enabled: true
+  prometheusSpec:
+    image:
+      tag: "v3.14.0-distroless"
