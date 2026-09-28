@@ -6,7 +6,7 @@ image:
   tag: "v0.132"
 
 env:
-  ALERTMANAGER_URI: "http://prometheus-alertmanager:9093"
+  ALERTMANAGER_URI: "http://kube-prom-stack-kube-prome-alertmanager:9093"
 
 ingress:
   enabled: true

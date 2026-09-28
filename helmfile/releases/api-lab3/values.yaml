@@ -24,12 +24,6 @@ podLabels:
   app.kubernetes.io/part-of: shop
   app.kubernetes.io/lab: lab3
 
-# Нужно для работы prometheus discovery
-podAnnotations:
-  prometheus.io/scrape: "true"
-  prometheus.io/path: /metrics
-  prometheus.io/port: "8080"
-
 ingress:
   enabled: true
   className: "traefik"

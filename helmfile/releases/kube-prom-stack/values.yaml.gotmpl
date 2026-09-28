@@ -1,0 +1,4 @@
+alertmanager:
+  templateFiles:
+    alertmanager.tmpl: |-
+{{ readFile "template.tmpl" | indent 6 }}

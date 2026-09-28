@@ -25,3 +25,10 @@ releases:
     chart: ../charts/api-universal
     needs:
       - api/postgres
+
+  - name: shop
+    namespace: api
+    chart: ../charts/shop
+    needs:
+      - api/api-lab3
+      - api/worker-lab3

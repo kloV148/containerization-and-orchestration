@@ -1,0 +1,12 @@
+serviceMonitor:
+  enabled: false
+  name: "app"
+  labels: {}
+  selector: {}
+  endpoints: []
+
+prometheusRule:
+  enabled: false
+  name: "app"
+  labels: {}
+  groups: []
