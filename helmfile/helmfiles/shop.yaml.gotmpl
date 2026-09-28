@@ -26,9 +26,9 @@ releases:
     needs:
       - api/postgres
 
-  - name: shop
+  - name: monitoring-resources
     namespace: api
-    chart: ../charts/shop
+    chart: ../charts/monitoring-resources
     needs:
       - api/api-lab3
       - api/worker-lab3
