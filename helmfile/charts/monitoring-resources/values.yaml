@@ -10,3 +10,10 @@ prometheusRule:
   name: "app"
   labels: {}
   groups: []
+
+configMap:
+  enabled: false
+  name: "app"
+  labels: {}
+  annotations: {}
+  data: {}

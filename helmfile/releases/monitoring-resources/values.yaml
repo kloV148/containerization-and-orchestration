@@ -1,0 +1,12 @@
+serviceMonitor:
+  enabled: true
+  name: shop
+  labels:
+    release: kube-prom-stack
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: shop
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s

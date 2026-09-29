@@ -33,6 +33,10 @@ grafana:
   sidecar:
     image:
       tag: "2.11.2"
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "true"
   admin:
     existingSecret: kube-prometheus-stack-secrets
     userKey: admin_user
