@@ -10,3 +10,59 @@ serviceMonitor:
     - port: http
       path: /metrics
       interval: 15s
+
+prometheusRule:
+  enabled: true
+  name: shop
+  labels:
+    release: kube-prom-stack
+  groups:
+    - name: shop-alerts
+      rules:
+        - alert: HighErrorRate
+          expr: >-
+            (
+              sum by (namespace, service) (
+                rate(http_errors_total{namespace="api"}[5m])
+              )
+              /
+              sum by (namespace, service) (
+                rate(http_requests_total{namespace="api"}[5m])
+              )
+            ) > 0.5
+            and
+            sum by (namespace, service) (
+              increase(http_requests_total{namespace="api"}[5m])
+            ) >= 10
+          for: 5m
+          labels:
+            severity: "Critical"
+          annotations:
+            summary: "{{ $labels.service }} error rate is above 50%"
+
+        - alert: HighLatency
+          expr: >-
+            histogram_quantile(
+              0.95,
+              sum by (le, namespace, service) (
+                rate(http_request_duration_seconds_bucket{
+                  namespace="api"
+                }[5m])
+              )
+            ) > 5
+          for: 5m
+          labels:
+            severity: "Critical"
+          annotations:
+            summary: "High response latency on {{ $labels.service }}"
+
+        - alert: ApiDown
+          expr: >-
+            min by (namespace, deployment) (
+              kube_deployment_status_replicas_available{namespace="api"}
+            ) == 0
+          for: 5m
+          labels:
+            severity: "Critical"
+          annotations:
+            summary: "{{ $labels.deployment }} is DOWN"
