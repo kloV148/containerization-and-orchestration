@@ -1,4 +1,4 @@
-// The burner is test infrastructure for Lab 4; the lab focuses on Kubernetes.
+// The batch service is test infrastructure for Lab 4; the lab focuses on Kubernetes.
 package main
 
 import (
@@ -25,7 +25,7 @@ type config struct {
 	cpuWorkers int
 }
 
-type burner struct {
+type batch struct {
 	memory        []byte
 	iterations    atomic.Uint64
 	memoryTouches atomic.Uint64
@@ -65,13 +65,13 @@ func loadConfig() (config, error) {
 	return config{port: port, memoryMiB: memoryMiB, cpuWorkers: cpuWorkers}, nil
 }
 
-func newBurner(memoryMiB int) *burner {
-	b := &burner{memory: make([]byte, memoryMiB*mebibyte)}
+func newBatch(memoryMiB int) *batch {
+	b := &batch{memory: make([]byte, memoryMiB*mebibyte)}
 	b.touchMemory()
 	return b
 }
 
-func (b *burner) touchMemory() {
+func (b *batch) touchMemory() {
 	// Writing every page makes the allocation resident and keeps it in the
 	// active working set instead of merely reserving virtual address space.
 	for offset := 0; offset < len(b.memory); offset += 4096 {
@@ -80,7 +80,7 @@ func (b *burner) touchMemory() {
 	b.memoryTouches.Add(1)
 }
 
-func (b *burner) burnMemory(ctx context.Context, interval time.Duration) {
+func (b *batch) burnMemory(ctx context.Context, interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	for {
@@ -93,7 +93,7 @@ func (b *burner) burnMemory(ctx context.Context, interval time.Duration) {
 	}
 }
 
-func (b *burner) burnCPU(ctx context.Context, workers int) {
+func (b *batch) burnCPU(ctx context.Context, workers int) {
 	for worker := 0; worker < workers; worker++ {
 		go func(id int) {
 			seed := sha256.Sum256([]byte(strconv.Itoa(id)))
@@ -116,7 +116,7 @@ func (b *burner) burnCPU(ctx context.Context, workers int) {
 	}
 }
 
-func (b *burner) handler() http.Handler {
+func (b *batch) handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -125,15 +125,15 @@ func (b *burner) handler() http.Handler {
 	mux.HandleFunc("GET /metrics", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
 		_, _ = fmt.Fprintf(w,
-			"# HELP burner_memory_bytes Bytes retained by the burner.\n"+
-				"# TYPE burner_memory_bytes gauge\n"+
-				"burner_memory_bytes %d\n"+
-				"# HELP burner_memory_touch_passes_total Completed passes over the retained memory.\n"+
-				"# TYPE burner_memory_touch_passes_total counter\n"+
-				"burner_memory_touch_passes_total %d\n"+
-				"# HELP burner_cpu_iterations_total Completed CPU burn iterations.\n"+
-				"# TYPE burner_cpu_iterations_total counter\n"+
-				"burner_cpu_iterations_total %d\n",
+			"# HELP batch_memory_bytes Bytes retained by the batch service.\n"+
+				"# TYPE batch_memory_bytes gauge\n"+
+				"batch_memory_bytes %d\n"+
+				"# HELP batch_memory_touch_passes_total Completed passes over the retained memory.\n"+
+				"# TYPE batch_memory_touch_passes_total counter\n"+
+				"batch_memory_touch_passes_total %d\n"+
+				"# HELP batch_cpu_iterations_total Completed CPU burn iterations.\n"+
+				"# TYPE batch_cpu_iterations_total counter\n"+
+				"batch_cpu_iterations_total %d\n",
 			len(b.memory), b.memoryTouches.Load(), b.iterations.Load(),
 		)
 	})
@@ -151,7 +151,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	load := newBurner(cfg.memoryMiB)
+	load := newBatch(cfg.memoryMiB)
 	load.burnCPU(ctx, cfg.cpuWorkers)
 	go load.burnMemory(ctx, time.Second)
 
@@ -170,7 +170,7 @@ func main() {
 		_ = server.Shutdown(shutdownCtx)
 	}()
 
-	logger.Info("burner started",
+	logger.Info("batch started",
 		"port", cfg.port,
 		"memory_mib", cfg.memoryMiB,
 		"cpu_workers", cfg.cpuWorkers,

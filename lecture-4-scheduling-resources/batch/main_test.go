@@ -43,8 +43,8 @@ func TestLoadConfigRejectsInvalidValues(t *testing.T) {
 	}
 }
 
-func TestNewBurnerAllocatesRequestedMemory(t *testing.T) {
-	b := newBurner(2)
+func TestNewBatchAllocatesRequestedMemory(t *testing.T) {
+	b := newBatch(2)
 	if got, want := len(b.memory), 2*mebibyte; got != want {
 		t.Fatalf("memory length = %d, want %d", got, want)
 	}
@@ -65,7 +65,7 @@ func TestNewBurnerAllocatesRequestedMemory(t *testing.T) {
 }
 
 func TestHandler(t *testing.T) {
-	b := newBurner(1)
+	b := newBatch(1)
 
 	health := httptest.NewRecorder()
 	b.handler().ServeHTTP(health, httptest.NewRequest(http.MethodGet, "/health", nil))
@@ -75,13 +75,13 @@ func TestHandler(t *testing.T) {
 
 	metrics := httptest.NewRecorder()
 	b.handler().ServeHTTP(metrics, httptest.NewRequest(http.MethodGet, "/metrics", nil))
-	if !strings.Contains(metrics.Body.String(), "burner_memory_bytes 1048576") {
+	if !strings.Contains(metrics.Body.String(), "batch_memory_bytes 1048576") {
 		t.Fatalf("memory metric is missing: %s", metrics.Body.String())
 	}
-	if !strings.Contains(metrics.Body.String(), "burner_memory_touch_passes_total 1") {
+	if !strings.Contains(metrics.Body.String(), "batch_memory_touch_passes_total 1") {
 		t.Fatalf("memory touch metric is missing: %s", metrics.Body.String())
 	}
-	if !strings.Contains(metrics.Body.String(), "burner_cpu_iterations_total 0") {
+	if !strings.Contains(metrics.Body.String(), "batch_cpu_iterations_total 0") {
 		t.Fatalf("CPU metric is missing: %s", metrics.Body.String())
 	}
 }

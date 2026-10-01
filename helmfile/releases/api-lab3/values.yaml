@@ -52,3 +52,15 @@ resources:
   requests:
     cpu: 50m
     memory: 64Mi
+
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/region
+    whenUnsatisfiable: DoNotSchedule
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/component: api
+        app.kubernetes.io/part-of: shop
+        app.kubernetes.io/lab: lab3
+    matchLabelKeys:
+      - pod-template-hash

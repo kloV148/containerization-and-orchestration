@@ -1,0 +1,39 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/klov148/batch-lab4
+  pullPolicy: IfNotPresent
+  tag: latest
+
+env:
+  MEMORY_MIB: "64"
+  CPU_WORKERS: "1"
+  PORT: "8080"
+
+podLabels:
+  app.kubernetes.io/component: batch
+  app.kubernetes.io/part-of: shop
+  app.kubernetes.io/lab: lab4
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 256Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+nameOverride: batch-lab4
+fullnameOverride: batch-lab4
+
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/region
+    whenUnsatisfiable: DoNotSchedule
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/component: batch
+        app.kubernetes.io/part-of: shop
+        app.kubernetes.io/lab: lab4
+    matchLabelKeys:
+      - pod-template-hash

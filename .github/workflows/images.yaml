@@ -5,7 +5,7 @@ on:
     paths:
       - 'lecture-*/api/**'
       - 'lecture-*/worker/**'
-      - 'lecture-*/burner/**'
+      - 'lecture-*/batch/**'
       - '.github/workflows/images.yaml'
 
 jobs:
@@ -18,7 +18,7 @@ jobs:
           # - { context: lecture-2-observability/api, image: "ghcr.io/klov148/api-lab2" }
           - { context: lecture-3-kubernetes-control-plane/api, image: "ghcr.io/klov148/api-lab3" }
           - { context: lecture-3-kubernetes-control-plane/worker, image: "ghcr.io/klov148/worker-lab3" }
-          - { context: lecture-4-scheduling-resources/burner, image: "ghcr.io/klov148/burner-lab4" }
+          - { context: lecture-4-scheduling-resources/batch, image: "ghcr.io/klov148/batch-lab4" }
 
     permissions:
       contents: read

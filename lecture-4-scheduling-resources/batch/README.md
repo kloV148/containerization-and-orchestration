@@ -1,13 +1,12 @@
-# Lab 4 burner
+# Lab 4 batch
 
-The burner is disposable background load for the scheduling and resource
+The batch service is disposable background load for the scheduling and resource
 pressure experiments in Lab 4. It continuously consumes CPU and keeps a
 configurable amount of memory in its active working set by rewriting every
 memory page once per second. It has no business function.
 
-The lab calls the Kubernetes workload `batch`; `burner` is the image and
-binary used by that workload. The chart value controlling synthetic memory
-usage should be passed to the container as `MEMORY_MIB`.
+The chart value controlling synthetic memory usage should be passed to the
+container as `MEMORY_MIB`.
 
 Configuration:
 

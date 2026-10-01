@@ -16,3 +16,9 @@ releases:
     chart: ../charts/kyverno-policies
     needs:
       - kyverno/kyverno
+
+  - name: batch-lab4
+    namespace: api
+    chart: ../charts/api-universal
+    needs:
+      - api/kyverno-policies
