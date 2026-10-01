@@ -5,7 +5,7 @@ defaultRules:
   create: false
 
 kubernetesServiceMonitors:
-  enabled: false
+  enabled: true
 
 kubeStateMetrics:
   enabled: true
