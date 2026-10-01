@@ -26,8 +26,9 @@ type config struct {
 }
 
 type burner struct {
-	memory     []byte
-	iterations atomic.Uint64
+	memory        []byte
+	iterations    atomic.Uint64
+	memoryTouches atomic.Uint64
 }
 
 func envPositiveInt(name string, fallback int) (int, error) {
@@ -65,13 +66,31 @@ func loadConfig() (config, error) {
 }
 
 func newBurner(memoryMiB int) *burner {
-	memory := make([]byte, memoryMiB*mebibyte)
-	// Touch every page so the allocation becomes resident memory rather than
-	// remaining only virtual address space.
-	for offset := 0; offset < len(memory); offset += 4096 {
-		memory[offset] = 1
+	b := &burner{memory: make([]byte, memoryMiB*mebibyte)}
+	b.touchMemory()
+	return b
+}
+
+func (b *burner) touchMemory() {
+	// Writing every page makes the allocation resident and keeps it in the
+	// active working set instead of merely reserving virtual address space.
+	for offset := 0; offset < len(b.memory); offset += 4096 {
+		b.memory[offset]++
 	}
-	return &burner{memory: memory}
+	b.memoryTouches.Add(1)
+}
+
+func (b *burner) burnMemory(ctx context.Context, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			b.touchMemory()
+		}
+	}
 }
 
 func (b *burner) burnCPU(ctx context.Context, workers int) {
@@ -109,10 +128,13 @@ func (b *burner) handler() http.Handler {
 			"# HELP burner_memory_bytes Bytes retained by the burner.\n"+
 				"# TYPE burner_memory_bytes gauge\n"+
 				"burner_memory_bytes %d\n"+
+				"# HELP burner_memory_touch_passes_total Completed passes over the retained memory.\n"+
+				"# TYPE burner_memory_touch_passes_total counter\n"+
+				"burner_memory_touch_passes_total %d\n"+
 				"# HELP burner_cpu_iterations_total Completed CPU burn iterations.\n"+
 				"# TYPE burner_cpu_iterations_total counter\n"+
 				"burner_cpu_iterations_total %d\n",
-			len(b.memory), b.iterations.Load(),
+			len(b.memory), b.memoryTouches.Load(), b.iterations.Load(),
 		)
 	})
 	return mux
@@ -131,6 +153,7 @@ func main() {
 
 	load := newBurner(cfg.memoryMiB)
 	load.burnCPU(ctx, cfg.cpuWorkers)
+	go load.burnMemory(ctx, time.Second)
 
 	server := &http.Server{
 		Addr:              fmt.Sprintf(":%d", cfg.port),

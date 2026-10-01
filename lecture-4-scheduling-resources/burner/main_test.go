@@ -53,6 +53,15 @@ func TestNewBurnerAllocatesRequestedMemory(t *testing.T) {
 			t.Fatalf("page at offset %d was not touched", offset)
 		}
 	}
+	b.touchMemory()
+	if got := b.memoryTouches.Load(); got != 2 {
+		t.Fatalf("memory touch passes = %d, want 2", got)
+	}
+	for offset := 0; offset < len(b.memory); offset += 4096 {
+		if b.memory[offset] != 2 {
+			t.Fatalf("page at offset %d was not touched again", offset)
+		}
+	}
 }
 
 func TestHandler(t *testing.T) {
@@ -68,6 +77,9 @@ func TestHandler(t *testing.T) {
 	b.handler().ServeHTTP(metrics, httptest.NewRequest(http.MethodGet, "/metrics", nil))
 	if !strings.Contains(metrics.Body.String(), "burner_memory_bytes 1048576") {
 		t.Fatalf("memory metric is missing: %s", metrics.Body.String())
+	}
+	if !strings.Contains(metrics.Body.String(), "burner_memory_touch_passes_total 1") {
+		t.Fatalf("memory touch metric is missing: %s", metrics.Body.String())
 	}
 	if !strings.Contains(metrics.Body.String(), "burner_cpu_iterations_total 0") {
 		t.Fatalf("CPU metric is missing: %s", metrics.Body.String())
