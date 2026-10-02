@@ -40,11 +40,11 @@ ingress:
 
 resources:
   limits:
-    cpu: 500m
-    memory: 256Mi
+    cpu: "1"
+    memory: 512Mi
   requests:
-    cpu: 50m
-    memory: 64Mi
+    cpu: 501m
+    memory: 100Mi
 
 nameOverride: batch-lab4
 fullnameOverride: batch-lab4

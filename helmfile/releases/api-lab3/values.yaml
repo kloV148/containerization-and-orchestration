@@ -60,10 +60,10 @@ strategy:
 resources:
   limits:
     cpu: 100m
-    memory: 128Mi
+    memory: 100Mi
   requests:
-    cpu: 50m
-    memory: 64Mi
+    cpu: 100m
+    memory: 100Mi
 
 topologySpreadConstraints:
   - maxSkew: 1
