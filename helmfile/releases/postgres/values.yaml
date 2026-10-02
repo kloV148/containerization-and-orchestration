@@ -18,6 +18,13 @@ resources:
     cpu: 500m
     memory: 256Mi
 
+priorityClass:
+  enabled: true
+  value: 100000
+  globalDefault: false
+  preemptionPolicy: PreemptLowerPriority
+  description: High priority for the critical PostgreSQL path
+
 secret:
   enabled: true
   name: postgres-lab3-secret

@@ -13,6 +13,16 @@ resources: {}
   #   cpu: 100m
   #   memory: 128Mi
 
+priorityClass:
+  enabled: false
+  # Leave empty to use <release-fullname>-priority.
+  name: ""
+  value: 0
+  globalDefault: false
+  # Allowed values: PreemptLowerPriority or Never.
+  preemptionPolicy: PreemptLowerPriority
+  description: ""
+
 secret:
   enabled: false
   name: ""

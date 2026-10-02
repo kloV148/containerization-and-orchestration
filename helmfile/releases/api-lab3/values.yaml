@@ -29,6 +29,13 @@ podDisruptionBudget:
   budgetType: minAvailable
   podCount: 1
 
+priorityClass:
+  enabled: true
+  value: 100000
+  globalDefault: false
+  preemptionPolicy: PreemptLowerPriority
+  description: High priority for the critical API path
+
 ingress:
   enabled: true
   className: "traefik"

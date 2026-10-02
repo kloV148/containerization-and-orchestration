@@ -8,6 +8,9 @@ metadata:
 spec:
   instances: {{ .Values.instances }}
   imageName: {{ .Values.image }}
+  {{- if .Values.priorityClass.enabled }}
+  priorityClassName: {{ include "api.priorityClassName" . }}
+  {{- end }}
   {{- with .Values.bootstrap }}
   bootstrap:
     {{- toYaml . | nindent 4 }}

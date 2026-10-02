@@ -171,6 +171,16 @@ strategy: {}
 
 topologySpreadConstraints: []
 
+priorityClass:
+  enabled: false
+  # Leave empty to use <release-fullname>-priority.
+  name: ""
+  value: 0
+  globalDefault: false
+  # Allowed values: PreemptLowerPriority or Never.
+  preemptionPolicy: PreemptLowerPriority
+  description: ""
+
 podDisruptionBudget:
   enabled: false
   # Allowed values: minAvailable or maxUnavailable.

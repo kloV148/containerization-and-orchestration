@@ -1,0 +1,14 @@
+{{- if .Values.priorityClass.enabled }}
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: {{ include "api.priorityClassName" . }}
+  labels:
+    {{- include "api.labels" . | nindent 4 }}
+value: {{ .Values.priorityClass.value }}
+globalDefault: {{ .Values.priorityClass.globalDefault }}
+preemptionPolicy: {{ .Values.priorityClass.preemptionPolicy }}
+{{- with .Values.priorityClass.description }}
+description: {{ . | quote }}
+{{- end }}
+{{- end }}

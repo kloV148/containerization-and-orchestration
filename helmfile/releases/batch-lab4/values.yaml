@@ -20,6 +20,13 @@ podDisruptionBudget:
   budgetType: minAvailable
   podCount: 1
 
+priorityClass:
+  enabled: true
+  value: -1000
+  globalDefault: false
+  preemptionPolicy: Never
+  description: Low priority for expendable batch workloads
+
 ingress:
   enabled: true
   className: "traefik"
