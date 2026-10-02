@@ -16,4 +16,8 @@ spec:
   storage:
     {{- toYaml . | nindent 4 }}
   {{- end }}
+  {{- with .Values.resources }}
+  resources:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 {{- end }}

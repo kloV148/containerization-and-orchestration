@@ -25,6 +25,17 @@ podLabels:
   app.kubernetes.io/part-of: shop
   app.kubernetes.io/lab: lab3
 
+ingress:
+  enabled: true
+  className: "traefik"
+  annotations: {}
+  hosts:
+    - host: worker-lab3.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
 resources:
   limits:
     cpu: 100m

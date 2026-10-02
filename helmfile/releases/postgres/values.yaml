@@ -10,6 +10,14 @@ storage:
   size: 1Gi
   storageClass: local-path
 
+resources:
+  limits:
+    cpu: "1"
+    memory: 512Mi
+  requests:
+    cpu: 500m
+    memory: 256Mi
+
 secret:
   enabled: true
   name: postgres-lab3-secret

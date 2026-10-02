@@ -15,6 +15,17 @@ podLabels:
   app.kubernetes.io/part-of: shop
   app.kubernetes.io/lab: lab4
 
+ingress:
+  enabled: true
+  className: "traefik"
+  annotations: {}
+  hosts:
+    - host: batch-lab4.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
 resources:
   limits:
     cpu: 500m

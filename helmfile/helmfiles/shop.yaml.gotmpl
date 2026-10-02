@@ -26,6 +26,10 @@ releases:
     needs:
       - api/postgres
 
+  - name: batch-lab4
+    namespace: api
+    chart: ../charts/api-universal
+
   - name: monitoring-resources
     namespace: api
     chart: ../charts/monitoring-resources
