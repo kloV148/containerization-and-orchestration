@@ -170,3 +170,9 @@ affinity: {}
 strategy: {}
 
 topologySpreadConstraints: []
+
+podDisruptionBudget:
+  enabled: false
+  # Allowed values: minAvailable or maxUnavailable.
+  budgetType: minAvailable
+  podCount: 1

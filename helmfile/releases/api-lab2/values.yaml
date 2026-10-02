@@ -12,6 +12,11 @@ podLabels:
   app.kubernetes.io/part-of: shop
   app.kubernetes.io/lab: lab2
 
+podDisruptionBudget:
+  enabled: true
+  budgetType: minAvailable
+  podCount: 1
+
 # Нужно для работы prometheus discovery
 podAnnotations:
   prometheus.io/scrape: "true"

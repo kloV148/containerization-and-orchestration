@@ -15,6 +15,11 @@ podLabels:
   app.kubernetes.io/part-of: shop
   app.kubernetes.io/lab: lab4
 
+podDisruptionBudget:
+  enabled: true
+  budgetType: minAvailable
+  podCount: 1
+
 ingress:
   enabled: true
   className: "traefik"
