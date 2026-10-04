@@ -11,6 +11,15 @@ kubeStateMetrics:
   enabled: true
 
 kube-state-metrics:
+  replicas: 2
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: topology.kubernetes.io/region
+      whenUnsatisfiable: DoNotSchedule
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/name: kube-state-metrics
+          app.kubernetes.io/instance: kube-prom-stack
   image:
     registry: registry.k8s.io
     repository: kube-state-metrics/kube-state-metrics
@@ -68,6 +77,15 @@ alertmanager:
             send_resolved: true
             message: '{{`{{ template "telegram.lab2.text" . }}`}}'
   alertmanagerSpec:
+    replicas: 2
+    topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/region
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: alertmanager
+            app.kubernetes.io/instance: kube-prom-stack-kube-prome-alertmanager
     image:
       tag: "v0.34.1"
     volumes:
@@ -94,6 +112,15 @@ prometheusOperator:
 prometheus:
   enabled: true
   prometheusSpec:
+    replicas: 2
+    topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/region
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: prometheus
+            app.kubernetes.io/instance: kube-prom-stack-kube-prome-prometheus
     image:
       tag: "v3.14.0-distroless"
 

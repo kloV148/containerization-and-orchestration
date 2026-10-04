@@ -8,11 +8,15 @@
 Алерт: {{ .Labels.alertname }}
 Описание: {{ .Annotations.summary }}
 Критичность: {{ .Labels.severity }}
+
 {{- with .Labels.component }}
 Component: {{ . }}
 {{- end }}
 {{- with .Labels.part_of }}
 Part of: {{ . }}
+{{- end }}
+{{- with .Labels.condition }}
+Condition Failed: {{ . }}
 {{- end }}
 {{ end }}
 {{ end }}

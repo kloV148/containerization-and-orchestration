@@ -36,7 +36,7 @@ prometheusRule:
             ) >= 10
           for: 5m
           labels:
-            severity: "Critical"
+            severity: "High"
           annotations:
             summary: "{{ $labels.service }} error rate is above 50%"
 
@@ -52,7 +52,7 @@ prometheusRule:
             ) > 5
           for: 5m
           labels:
-            severity: "Critical"
+            severity: "High"
           annotations:
             summary: "High response latency on {{ $labels.service }}"
 
@@ -66,3 +66,37 @@ prometheusRule:
             severity: "Critical"
           annotations:
             summary: "{{ $labels.deployment }} is DOWN"
+
+
+    - name: cluster-alerts
+      rules:
+        - alert: NodeNotReady
+          expr: >-
+            group by (node, condition, status) (
+              kube_node_status_condition{condition="Ready", status=~"false|unknown"} == 1
+            )
+          for: 5m
+          labels:
+            severity: "Critical"
+          annotations:
+            summary: "{{ $labels.node }} not ready"
+            
+        - alert: APIServerDown
+          expr: >-
+            sum(up{job="apiserver"}) == 0
+            or absent(up{job="apiserver"})
+          for: 5m
+          labels:
+            severity: "Critical"
+          annotations:
+            summary: "No API server metrics endpoint is reachable"
+
+        - alert: CoreDNSDown
+          expr: >-
+            sum(up{job="coredns"}) == 0
+            or absent(up{job="coredns"})
+          for: 5m
+          labels:
+            severity: "Critical"
+          annotations:
+            summary: "No CoreDNS metrics endpoint is reachable"
