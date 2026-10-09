@@ -27,12 +27,12 @@ spec:
           apiVersion: networking.k8s.io/v1
           kind: NetworkPolicy
           metadata:
-            name: default-deny-ingress
+            name: default-deny
             namespace: (( variables.nsName ))
           spec:
             podSelector: {}
             policyTypes:
               - Ingress
-            ingress:
-              - from:
-                  - namespaceSelector: {}
+              - Egress
+            ingress: []
+            egress: []
