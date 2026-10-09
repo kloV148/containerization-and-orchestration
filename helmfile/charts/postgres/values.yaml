@@ -13,6 +13,18 @@ resources: {}
   #   cpu: 100m
   #   memory: 128Mi
 
+networkPolicy:
+  enabled: false
+  # Everything below podSelector is passed directly to NetworkPolicy.spec.
+  # Example:
+  # spec:
+  #   policyTypes:
+  #     - Ingress
+  #     - Egress
+  #   ingress: []
+  #   egress: []
+  spec: {}
+
 priorityClass:
   enabled: false
   # Leave empty to use <release-fullname>-priority.
