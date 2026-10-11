@@ -46,6 +46,23 @@ resources:
     cpu: 501m
     memory: 100Mi
 
+networkPolicy:
+  enabled: true
+  spec:
+    policyTypes:
+      - Ingress
+    ingress:
+      - from:
+          - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: observability
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: prometheus
+        ports:
+          - protocol: TCP
+            port: 8080
+
 nameOverride: batch-lab4
 fullnameOverride: batch-lab4
 
