@@ -1,4 +1,4 @@
-// The API is test infrastructure for Lab 3; the lab focuses on Kubernetes.
+// The API is test infrastructure for Labs 3 and 6.
 package main
 
 import (
@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"math/rand/v2"
 	"net/http"
 	"net/url"
 	"os"
@@ -89,22 +90,42 @@ func (s *postgresStore) ListOrders(ctx context.Context) ([]order, error) {
 	return orders, rows.Err()
 }
 
+type appConfig struct {
+	version    string
+	healthFail bool
+	fail       bool
+	flaky      bool
+}
+
+func configFromEnv() (appConfig, error) {
+	version := os.Getenv("VERSION")
+	if version == "" {
+		version = "v1"
+	}
+	if version != "v1" && version != "v2" {
+		return appConfig{}, fmt.Errorf("VERSION must be v1 or v2, got %q", version)
+	}
+	return appConfig{version: version, healthFail: envBool("HEALTH_FAIL"), fail: envBool("FAIL"), flaky: envBool("FLAKY")}, nil
+}
+
 type app struct {
+	config        appConfig
+	randomFloat   func() float64
 	logger        *slog.Logger
 	store         orderStore
-	healthFail    bool
 	requests      *prometheus.CounterVec
 	errors        *prometheus.CounterVec
 	duration      *prometheus.HistogramVec
 	ordersCreated prometheus.Counter
 }
 
-func newApp(logger *slog.Logger, store orderStore, healthFail bool) (*app, http.Handler) {
+func newApp(logger *slog.Logger, store orderStore, config appConfig) (*app, http.Handler) {
 	registry := prometheus.NewRegistry()
 	a := &app{
-		logger:     logger,
-		store:      store,
-		healthFail: healthFail,
+		logger:      logger,
+		store:       store,
+		config:      config,
+		randomFloat: rand.Float64,
 		requests: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: "http_requests_total", Help: "Completed API requests.",
 		}, []string{"method", "path", "code"}),
@@ -122,6 +143,7 @@ func newApp(logger *slog.Logger, store orderStore, healthFail bool) (*app, http.
 	registry.MustRegister(a.requests, a.errors, a.duration, a.ordersCreated)
 
 	mux := http.NewServeMux()
+	mux.Handle("GET /version", a.instrument("/version", http.HandlerFunc(a.version)))
 	mux.Handle("GET /health", a.instrument("/health", http.HandlerFunc(a.health)))
 	mux.Handle("POST /order", a.instrument("/order", http.HandlerFunc(a.createOrder)))
 	mux.Handle("GET /orders", a.instrument("/orders", http.HandlerFunc(a.listOrders)))
@@ -171,9 +193,14 @@ func (w *statusRecorder) Write(body []byte) (int, error) {
 	return w.ResponseWriter.Write(body)
 }
 
+func (a *app) version(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	_, _ = io.WriteString(w, a.config.version+"\n")
+}
+
 func (a *app) health(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	if a.healthFail {
+	if a.config.healthFail {
 		http.Error(w, "unhealthy", http.StatusServiceUnavailable)
 		return
 	}
@@ -182,6 +209,15 @@ func (a *app) health(w http.ResponseWriter, _ *http.Request) {
 
 func (a *app) createOrder(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
+	// Inject failures before any database write, so retries cannot duplicate an order.
+	if a.config.version == "v2" && a.config.fail {
+		writeError(w, http.StatusInternalServerError, "forced v2 failure")
+		return
+	}
+	if a.config.version == "v1" && a.config.flaky && a.randomFloat() < 0.2 {
+		writeError(w, http.StatusInternalServerError, "random v1 failure")
+		return
+	}
 	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
 	decoder.DisallowUnknownFields()
 	var input createOrderInput
@@ -288,6 +324,11 @@ func envBool(name string) bool {
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	config, err := configFromEnv()
+	if err != nil {
+		logger.Error("invalid configuration", "error", err)
+		os.Exit(1)
+	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -300,7 +341,7 @@ func main() {
 	}
 	defer db.Close()
 
-	_, handler := newApp(logger, &postgresStore{db: db}, envBool("HEALTH_FAIL"))
+	_, handler := newApp(logger, &postgresStore{db: db}, config)
 	server := &http.Server{
 		Addr:              ":" + listenPort(),
 		Handler:           handler,
@@ -316,7 +357,7 @@ func main() {
 		_ = server.Shutdown(shutdownCtx)
 	}()
 
-	logger.Info("api listening", "port", listenPort(), "health_fail", envBool("HEALTH_FAIL"))
+	logger.Info("api listening", "port", listenPort(), "version", config.version, "health_fail", config.healthFail, "fail", config.fail, "flaky", config.flaky)
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logger.Error("http server failed", "error", err)
 		os.Exit(1)

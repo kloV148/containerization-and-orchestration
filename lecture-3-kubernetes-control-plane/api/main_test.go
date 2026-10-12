@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -43,7 +44,7 @@ func (s *memoryStore) ListOrders(context.Context) ([]order, error) {
 
 func testHandler(store orderStore, healthFail bool) http.Handler {
 	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
-	_, handler := newApp(logger, store, healthFail)
+	_, handler := newApp(logger, store, appConfig{version: "v1", healthFail: healthFail})
 	return handler
 }
 
@@ -167,5 +168,85 @@ func TestDatabaseURLFromPGEnvironment(t *testing.T) {
 	want := "postgres://api:p%40ss%2Fword@postgres-rw.shop.svc:5433/shop?sslmode=require"
 	if got != want {
 		t.Fatalf("databaseURL() = %q, want %q", got, want)
+	}
+}
+
+func TestReleaseModes(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		config   appConfig
+		samples  []float64
+		statuses []int
+	}{
+		{"v1 ignores FAIL", appConfig{version: "v1", fail: true}, []float64{0}, []int{201}},
+		{"v2 ignores FLAKY", appConfig{version: "v2", flaky: true}, []float64{0}, []int{201}},
+		{"bad v2", appConfig{version: "v2", fail: true}, []float64{0, 0.9}, []int{500, 500}},
+		{"flaky v1", appConfig{version: "v1", flaky: true}, []float64{0.1, 0.2, 0.9, 0}, []int{500, 201, 201, 500}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			store := &memoryStore{}
+			a, handler := newApp(slog.New(slog.NewJSONHandler(io.Discard, nil)), store, tt.config)
+			version := httptest.NewRecorder()
+			handler.ServeHTTP(version, httptest.NewRequest("GET", "/version", nil))
+			if version.Code != 200 || version.Body.String() != tt.config.version+"\n" {
+				t.Fatalf("version: %d %q", version.Code, version.Body.String())
+			}
+			created, failed := 0, 0
+			for i, sample := range tt.samples {
+				a.randomFloat = func() float64 { return sample }
+				response := httptest.NewRecorder()
+				handler.ServeHTTP(response, httptest.NewRequest("POST", "/order", strings.NewReader(`{"item":"keyboard","quantity":1}`)))
+				if response.Code != tt.statuses[i] {
+					t.Fatalf("request %d: status %d, want %d", i, response.Code, tt.statuses[i])
+				}
+				if response.Code == 201 {
+					created++
+				} else {
+					failed++
+				}
+			}
+			if len(store.orders) != created {
+				t.Fatalf("stored %d orders, want %d", len(store.orders), created)
+			}
+			for _, path := range []string{"/health", "/orders"} {
+				response := httptest.NewRecorder()
+				handler.ServeHTTP(response, httptest.NewRequest("GET", path, nil))
+				if response.Code != 200 {
+					t.Fatalf("%s: status %d", path, response.Code)
+				}
+			}
+			metrics := httptest.NewRecorder()
+			handler.ServeHTTP(metrics, httptest.NewRequest("GET", "/metrics", nil))
+			if failed > 0 {
+				for _, metric := range []string{"http_requests_total", "http_errors_total", "http_request_duration_seconds_count"} {
+					want := fmt.Sprintf(`%s{code="500",method="POST",path="/order"} %d`, metric, failed)
+					if !strings.Contains(metrics.Body.String(), want) {
+						t.Fatalf("missing metric %s", want)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestReleaseConfiguration(t *testing.T) {
+	t.Setenv("VERSION", "")
+	t.Setenv("FAIL", "false")
+	t.Setenv("FLAKY", "false")
+	t.Setenv("HEALTH_FAIL", "false")
+	config, err := configFromEnv()
+	if err != nil || config.version != "v1" || config.fail || config.flaky {
+		t.Fatalf("default configuration: %+v, %v", config, err)
+	}
+	t.Setenv("VERSION", "v2")
+	t.Setenv("FAIL", "true")
+	t.Setenv("FLAKY", "true")
+	config, err = configFromEnv()
+	if err != nil || config.version != "v2" || !config.fail || !config.flaky {
+		t.Fatalf("configuration: %+v, %v", config, err)
+	}
+	t.Setenv("VERSION", "v3")
+	if _, err := configFromEnv(); err == nil {
+		t.Fatal("invalid VERSION accepted")
 	}
 }
