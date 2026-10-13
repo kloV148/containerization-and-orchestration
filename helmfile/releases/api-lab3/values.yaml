@@ -90,6 +90,8 @@ networkPolicy:
         ports:
           - protocol: TCP
             port: 8080
+          - protocol: TCP
+            port: 15008
     egress:
       - to:
           - namespaceSelector:
@@ -110,6 +112,8 @@ networkPolicy:
         ports:
           - protocol: TCP
             port: 5432
+          - protocol: TCP
+            port: 15008
       - to:
           - namespaceSelector:
               matchLabels:
@@ -120,6 +124,8 @@ networkPolicy:
         ports:
           - protocol: TCP
             port: 4318
+          - protocol: TCP
+            port: 15008
 
 topologySpreadConstraints:
   - maxSkew: 1
