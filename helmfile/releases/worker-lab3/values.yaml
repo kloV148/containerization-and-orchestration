@@ -1,4 +1,4 @@
-replicaCount: 2
+replicaCount: 1
 
 image:
   repository: ghcr.io/klov148/worker-lab3
@@ -25,6 +25,8 @@ podLabels:
   app.kubernetes.io/part-of: shop
   app.kubernetes.io/lab: lab3
 
+# With one replica this budget blocks voluntary eviction (including node drain).
+# Scale to two replicas before maintenance if availability must be preserved.
 podDisruptionBudget:
   enabled: true
   budgetType: minAvailable

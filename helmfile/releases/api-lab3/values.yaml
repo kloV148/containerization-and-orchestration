@@ -24,6 +24,8 @@ podLabels:
   app.kubernetes.io/part-of: shop
   app.kubernetes.io/lab: lab3
 
+# With one replica this budget blocks voluntary eviction (including node drain).
+# Scale to two replicas before maintenance if availability must be preserved.
 podDisruptionBudget:
   enabled: true
   budgetType: minAvailable
@@ -50,7 +52,7 @@ ingress:
 nameOverride: api-lab3
 fullnameOverride: api-lab3
 
-replicaCount: 2
+replicaCount: 1
 strategy:
   type: RollingUpdate
   rollingUpdate:

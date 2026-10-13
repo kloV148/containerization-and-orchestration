@@ -11,7 +11,7 @@ kubeStateMetrics:
   enabled: true
 
 kube-state-metrics:
-  replicas: 2
+  replicas: 1
   topologySpreadConstraints:
     - maxSkew: 1
       topologyKey: topology.kubernetes.io/region
@@ -77,7 +77,7 @@ alertmanager:
             send_resolved: true
             message: '{{`{{ template "telegram.lab2.text" . }}`}}'
   alertmanagerSpec:
-    replicas: 2
+    replicas: 1
     topologySpreadConstraints:
       - maxSkew: 1
         topologyKey: topology.kubernetes.io/region
@@ -112,7 +112,7 @@ prometheusOperator:
 prometheus:
   enabled: true
   prometheusSpec:
-    replicas: 2
+    replicas: 1
     topologySpreadConstraints:
       - maxSkew: 1
         topologyKey: topology.kubernetes.io/region
