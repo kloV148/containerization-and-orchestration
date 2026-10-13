@@ -1,0 +1,11 @@
+bases:
+  - ../bases/repositories.yaml.gotmpl
+  - ../bases/common.yaml.gotmpl
+
+defaultInherit:
+  - common
+
+releases:
+  - name: istio-templates
+    namespace: api
+    chart: ../charts/istio-templates

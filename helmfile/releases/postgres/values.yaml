@@ -94,3 +94,8 @@ secret:
   type: kubernetes.io/basic-auth
 
 fullnameOverride: postgres-lab3
+
+serviceAccount:
+  create: true
+  automount: true
+  name: posgres

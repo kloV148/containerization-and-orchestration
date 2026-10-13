@@ -115,3 +115,8 @@ topologySpreadConstraints:
         app.kubernetes.io/lab: lab3
     matchLabelKeys:
       - pod-template-hash
+
+serviceAccount:
+  create: true
+  automount: true
+  name: worker
