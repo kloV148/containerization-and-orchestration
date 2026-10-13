@@ -45,3 +45,16 @@ secret:
 
 nameOverride: ""
 fullnameOverride: ""
+
+# This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
+serviceAccount:
+  # Specifies whether a service account should be created.
+  create: false
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account.
+  annotations: {}
+  # The name of the service account to use.
+  # Required when create is true. With create=false, references an existing SA.
+  # Leave empty with create=false to let CloudNativePG create the cluster's SA.
+  name: ""

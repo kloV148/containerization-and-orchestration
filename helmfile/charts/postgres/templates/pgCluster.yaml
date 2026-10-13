@@ -6,6 +6,11 @@ metadata:
   labels:
     {{- include "api.labels" . | nindent 4 }}
 spec:
+  {{- if .Values.serviceAccount.create }}
+  serviceAccountName: {{ required "serviceAccount.name must be set when serviceAccount.create=true" .Values.serviceAccount.name | quote }}
+  {{- else if .Values.serviceAccount.name }}
+  serviceAccountName: {{ .Values.serviceAccount.name | quote }}
+  {{- end }}
   instances: {{ .Values.instances }}
   imageName: {{ .Values.image }}
   {{- if .Values.priorityClass.enabled }}
