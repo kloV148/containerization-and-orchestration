@@ -5,7 +5,7 @@ replicaCount: 1
 
 env:
   VERSION: "v2"
-  FAIL: "false"
+  FAIL: "true"
   FLAKY: "false"
   OTEL_SERVICE_NAME: api-v2
 

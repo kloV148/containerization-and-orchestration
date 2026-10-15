@@ -5,7 +5,7 @@ image:
 
 env:
   VERSION: "v1"
-  FLAKY: "true"
+  FLAKY: "false"
   PGHOST: "postgres-lab3-rw"
   PGPORT: "5432"
   PGDATABASE: "app"
@@ -66,7 +66,7 @@ service:
     app.kubernetes.io/part-of: shop
     app.kubernetes.io/lab: lab3
 
-replicaCount: 2
+replicaCount: 1
 strategy:
   type: RollingUpdate
   rollingUpdate:
