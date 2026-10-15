@@ -10,7 +10,7 @@ spec:
     - destination:
         host: api-lab3.api.svc.cluster.local
         subset: v1
-      weight: 90 
+      weight: 90
     # retries:
     #   attempts: 2
     #   perTryTimeout: 1s
@@ -18,4 +18,4 @@ spec:
     - destination:
         host: api-lab3.api.svc.cluster.local
         subset: v2
-      weight: 10 
+      weight: 10

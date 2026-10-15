@@ -111,6 +111,15 @@ prometheusOperator:
 
 prometheus:
   enabled: true
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hosts:
+      - prometheus.local
+    paths:
+      - /
+    pathType: Prefix
+    tls: []
   prometheusSpec:
     replicas: 1
     topologySpreadConstraints:
