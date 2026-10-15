@@ -4,6 +4,8 @@ image:
   tag: latest
 
 env:
+  VERSION: "v1"
+  FLAKY: "true"
   PGHOST: "postgres-lab3-rw"
   PGPORT: "5432"
   PGDATABASE: "app"
@@ -20,6 +22,7 @@ secretEnv:
     key: password
 
 podLabels:
+  version: v1
   app.kubernetes.io/component: api
   app.kubernetes.io/part-of: shop
   app.kubernetes.io/lab: lab3
@@ -52,7 +55,18 @@ ingress:
 nameOverride: api-lab3
 fullnameOverride: api-lab3
 
-replicaCount: 1
+service:
+  enabled: true
+  annotations:
+    traefik.ingress.kubernetes.io/service.nativelb: "true"
+  labels:
+    istio.io/use-waypoint: waypoint
+  selector:
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: shop
+    app.kubernetes.io/lab: lab3
+
+replicaCount: 2
 strategy:
   type: RollingUpdate
   rollingUpdate:

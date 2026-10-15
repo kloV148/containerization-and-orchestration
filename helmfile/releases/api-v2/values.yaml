@@ -1,0 +1,27 @@
+# Inherits shared API settings from api-lab3 in shop.yaml.gotmpl.
+nameOverride: api-v2
+fullnameOverride: api-v2
+replicaCount: 1
+
+env:
+  VERSION: "v2"
+  FAIL: "false"
+  FLAKY: "false"
+  OTEL_SERVICE_NAME: api-v2
+
+podLabels:
+  version: v2
+
+# api-lab3 owns the shared Service and Ingress. Its selector includes both versions.
+service:
+  enabled: false
+
+ingress:
+  enabled: false
+
+serviceAccount:
+  create: false
+  name: api
+
+priorityClass:
+  enabled: false

@@ -1,10 +1,18 @@
+{{- if .Values.service.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ include "api.fullname" . }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   labels:
     {{- include "api.labels" . | nindent 4 }}
     {{- with .Values.podLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.service.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
@@ -18,4 +26,9 @@ spec:
       nodePort: {{ . }}
       {{- end }}
   selector:
+    {{- if .Values.service.selector }}
+    {{- toYaml .Values.service.selector | nindent 4 }}
+    {{- else }}
     {{- include "api.selectorLabels" . | nindent 4 }}
+    {{- end }}
+{{- end }}

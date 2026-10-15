@@ -1,0 +1,13 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: waypoint-monitor
+  labels:
+    release: kube-prom-stack
+spec:
+  selector:
+    matchLabels:
+      gateway.networking.k8s.io/gateway-class-name: istio-waypoint
+  podMetricsEndpoints:
+  - port: http-envoy-prom
+    path: /stats/prometheus

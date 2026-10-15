@@ -1,0 +1,15 @@
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: api-route
+spec:
+  hosts:
+  - api-lab3.api.svc.cluster.local
+  http:
+  - route:
+    - destination:
+        host: api-lab3.api.svc.cluster.local
+    retries:
+      attempts: 2
+      perTryTimeout: 1s
+      retryOn: 5xx

@@ -20,6 +20,15 @@ releases:
     needs:
       - api/postgres
 
+  # - name: api-v2
+  #   namespace: api
+  #   chart: ../charts/api-universal
+  #   values:
+  #     - ../releases/api-lab3/values.yaml
+  #     - ../releases/api-v2/values.yaml
+  #   needs:
+  #     - api/api-lab3
+
   - name: worker-lab3
     namespace: api
     chart: ../charts/api-universal
