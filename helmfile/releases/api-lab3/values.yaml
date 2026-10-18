@@ -119,17 +119,15 @@ networkPolicy:
             port: 53
           - protocol: TCP
             port: 53
-      # Lab 8 fault injection: temporarily remove API -> PostgreSQL egress.
-      # Restore this block after testing policy-denied investigation.
-      # - to:
-      #     - podSelector:
-      #         matchLabels:
-      #           cnpg.io/cluster: postgres-lab3
-      #   ports:
-      #     - protocol: TCP
-      #       port: 5432
-      #     - protocol: TCP
-      #       port: 15008
+      - to:
+          - podSelector:
+              matchLabels:
+                cnpg.io/cluster: postgres-lab3
+        ports:
+          - protocol: TCP
+            port: 5432
+          - protocol: TCP
+            port: 15008
       - to:
           - namespaceSelector:
               matchLabels:
