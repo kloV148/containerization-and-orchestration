@@ -69,7 +69,23 @@ alertmanager:
       group_interval: 5m
       receiver: telegram
       repeat_interval: 1h
+      routes:
+        - matchers:
+            - investigation="network-policy"
+          receiver: network-investigation
+          group_by: [alertname, node, direction]
+          group_wait: 10s
+          group_interval: 1m
     receivers:
+      - name: network-investigation
+        webhook_configs:
+          - url: http://192.168.97.250:5678/webhook/network-policy-alert
+            send_resolved: false
+        telegram_configs:
+          - bot_token_file: /etc/am-secrets/bot-token
+            chat_id_file: /etc/am-secrets/chat-id
+            send_resolved: true
+            message: '{{`{{ template "telegram.lab2.text" . }}`}}'
       - name: telegram
         telegram_configs:
           - bot_token_file: /etc/am-secrets/bot-token
