@@ -128,18 +128,20 @@ networkPolicy:
             port: 5432
           - protocol: TCP
             port: 15008
-      - to:
-          - namespaceSelector:
-              matchLabels:
-                kubernetes.io/metadata.name: observability
-            podSelector:
-              matchLabels:
-                app.kubernetes.io/instance: jaeger
-        ports:
-          - protocol: TCP
-            port: 4318
-          - protocol: TCP
-            port: 15008
+      # Lab 8 fault injection: temporarily block API -> Jaeger trace export.
+      # Restore this allow block after the investigation test.
+      # - to:
+      #     - namespaceSelector:
+      #         matchLabels:
+      #           kubernetes.io/metadata.name: observability
+      #       podSelector:
+      #         matchLabels:
+      #           app.kubernetes.io/instance: jaeger
+      #   ports:
+      #     - protocol: TCP
+      #       port: 4318
+      #     - protocol: TCP
+      #       port: 15008
 
 topologySpreadConstraints:
   - maxSkew: 1
