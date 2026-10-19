@@ -95,14 +95,12 @@ networkPolicy:
             podSelector:
               matchLabels:
                 app.kubernetes.io/name: traefik
-          # Lab 8 fault injection: temporarily block Prometheus -> API scraping.
-          # Restore this source after the investigation test.
-          # - namespaceSelector:
-          #     matchLabels:
-          #       kubernetes.io/metadata.name: observability
-          #   podSelector:
-          #     matchLabels:
-          #       app.kubernetes.io/name: prometheus
+          - namespaceSelector:
+              matchLabels:
+                kubernetes.io/metadata.name: observability
+            podSelector:
+              matchLabels:
+                app.kubernetes.io/name: prometheus
         ports:
           - protocol: TCP
             port: 8080
