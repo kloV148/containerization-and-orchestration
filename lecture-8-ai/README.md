@@ -1,171 +1,156 @@
-# Lecture 8 — AI infrastructure (bonus lecture)
+# Отчёт по лабораторной работе № 8
 
-The newest layer devops sets up for teams: agents, the tools they use, automation, and the cost of it all.
+## Оглавление
 
-This README is a **self-contained summary** — if you missed the lecture, you can learn the material here. It has two halves: first *what AI is made of and how processes are built from it*, then *where it runs and what it costs*.
+1. [Проектирование сценария автоматизации](#use-case)
+2. [Требования к реализации](#implementation)
+3. [Локальный запуск](#local-run)
+4. [Мониторинг](#monitoring)
 
----
+<a id="use-case"></a>
+## 1. Проектирование сценария автоматизации
 
-## 0. Before you start — think about it
+Для автоматизации я взял процесс поиска проблем с сетевой недоступностью, 
+связанный с сетевыми политиками. 
 
-- Have you tried hosting your own model?
-- Do you only use chat, or build something more complex?
-- Do you use AI in your IDE?
-- Where in devops processes do you think AI could be plugged in?
+Процесс как будто довольно универсальный, 
+потому пусть будет дефолтная компания средних размеров, 
+в которой свыше пришел приказ внедрять AI в процессы. 
+Команда DevOps подумала и придумала запрячь AI смотреть что там с сетевыми политиками не так. 
 
-The whole lecture answers the last question: AI is now ordinary infrastructure — something a devops engineer deploys, gives access to, and pays for.
+**Кому помогает**: 
+помогает DevOps инженерам/релиз инженерам при релизах диагностировать сетевые проблемы связанные с сетевыми политиками
 
----
+**Что решает**: 
+решает проблему поиска какое изменение привело к сетевой недоступности. 
 
-## 1. AI chatbot
+**Что автоматизирует**: 
+локализация проблемы -> разбор метрик -> поиск изменений, создавших проблему
 
-> **AI chatbot** — a program that holds a natural-language dialogue: on each request the model generates a text answer, relying **only on what it learned during training**. It has no external tools and takes no actions — it answers, and a human does everything else.
 
-- The point: a chatbot **answers but doesn't act**.
-- **Example:** you ask "how do I restart a service?" → it gives you the command → *you* run it yourself.
+<a id="implementation"></a>
+## 2. Требования к реализации
 
----
+**Триггер**. 
+Для запуска автоматизации используется AlertManager,
+который отслеживает динамику policy denied  ошибок. 
+При достижении критического значения алерт срабатывает и дергает вебхук в n8n, 
+который и запускает воркфлоу
 
-## 2. AI agent
+**Шаги без AI**. 
+В самом workflow чистой логика выполнена проверка статуса алерта (запуск только на firing), 
+считывание скилов из файла и отправка результата в telegram.
+Так же список алертов разделятся отдельным шагом (split out)
 
-> **AI agent** — an automated system that meets three criteria *(Sber's definition)*:
-> - **Planning** — understand the task and build a plan of action;
-> - **Execution** — carry the actions out itself, using tools to interact with the outside world;
-> - **Autonomy** — follow the plan without approving every step with a human.
+**AI шаги**.
+Агент анализирует метрики и комиты в репозитории в данном временном промежутке. 
 
-Technically an agent is **LLM + tools + a loop**: the model decides which tool to call, sees the result, and continues until the task is done.
+**MCP серверы**.
+Prometheus mcp для чтения метрик и Github mcp чтобы смотреть изменения в репозитории. 
+Оба официальные взяты, сам не писал. 
 
-**Example:** you ask "find open pull requests in our repo and remind the authors" → the agent lists the open PRs, then comments on each one — it carries out a multi-step task on its own, not just answering.
+**Skill**.
+Описывает порядок расследования,
+правила для проверки гипотез и сам формат отчета. 
 
-**Chatbot vs agent:**
+**Результат**.
+Сообщение в телеграм чат с алертами, 
+которое содержит результаты расследования проблемы.
 
-| | Chatbot | Agent |
-|---|---|---|
-| What it does | Answers questions | Completes whole tasks |
-| Initiative | Waits for the next question | Plans the steps itself |
-| Tools | None — only the model's knowledge | Yes — acts in the outside world |
-| Autonomy | Every step is on the human | Acts without approving each step |
+<a id="local-run"></a>
+## 3. Локальный запуск
 
-> **A chatbot tells you what to do. An agent does it.**
+По сути кластер с сетевыми политиками и метриками уже готов из прошлых лабораторнеых работ, 
+поэтому он будет взят для экспериментов. 
 
----
+n8n развернул в [docker-compose](./deploy/docker-compose.yaml).
+В том же compose описал развертывание prometheus mcp сервера. 
+Засунул это всё в k3d сеть чтобы сильно не возиться с сетью и закостылил адреса. 
+Скиллы маунтятся в виде volume дабы читать из в воркфлоу.
 
-## 3. Tools and skills
+Чтобы это как-то работало в нынешней инфре был написан [костыльный сервис](./deploy/n8n-monitoring.yaml) без селекторов, 
+только с заданным EndpointSlice, 
+В котором задан адрес контейнера n8n.
+На этот сервис навешан ServiceMonitor. 
+Для существующего AM добавил в качестве ресивера вебхук n8n и добавил алерт. 
 
-> **AI tool** — a concrete action the agent can call to get information or affect the outside world. It has two parts: a **description** (text the model sees: what it does and what input it needs) and a **handler** (what actually executes the call — usually code).
+Модель развернул локлаьно через Lm studio.
+Для начала использовал какой то совсем нищий 3.5 4b, 
+но он прям тупым оказался. 
+В конечном варинте использвал Gemma-4 e4b MLX. 
+LM studio предоставляет встроеный сервер чтобы слать запросы в модель. 
+Апишка там на подобии OpenAI.
 
-The model itself does nothing in the world — it only decides *which tool to call*. The code around it does the work.
+Ниже на рисунке представлен сам конечный workflow
+![workflow](./pictures/workflow.png)
+Триггером для его запуска является вебхук. 
+Далее в split-out компоненте из тела запроса (`body.alerts`)
+берутся алерты и для каждого запускается обработка. 
+![split-out](./pictures/split_out.png)
 
-**Example — a `get_weather` tool:**
-1. You ask: "should I take an umbrella in Moscow?"
-2. The model decides to call `get_weather(Moscow)`
-3. The code runs the call → returns "rain, +12"
-4. The model answers: "yes, take an umbrella"
+В  if происходит проверка `{{ $json.status }} == firing`.
+В случае успешности проверки алерт отпарвляется на дальнейший анализ.
 
-> **AI skill** — a reusable package of know-how: *how* to do a specific task — in what order to act and by what rules. A skill may include its own tools.
+Шаши Read/Write files и  extract from file нужны чтобы из вольюма считать скилл и передать его в агента. 
 
-**Example — an "incident triage" skill:** "first check the metrics → find the anomaly in the logs → if the service is down, restart it → post a summary in the channel." It relies on tools, but adds the order and the rules.
+В агент прописан user message и скил как системный промпт. 
+![agent-conf](./pictures/agent_conf.png)
 
-**Tool vs skill:** a tool is *what* the agent can do; a skill is *how* it does a task well.
+Локальная модель подключена как OpenAI модель, 
+чтобы использовать из схему API. 
+Prometheus MCP развернут локально, 
+GitHub mcp предоставлен самим гитхабом, 
+для доступа используется сгенерировный токен для доступа только к этому репозиторию. 
+Ниже будет конфигурация этих mcp серверов
+![github-mcp](./pictures/github_mcp.png)
+![prom-mcp](./pictures/prom_mcp.png)
 
----
+Рассмотрим, какие тулзы этих MCP серврео используются.
 
-## 4. Toolkit
+**GitHub**
+- `list_commits`: находит коммиты выбранной ветки
+- `get_commit`: получить коммит с изменениями
+- `get_file_contents`: читает содержимое файла
 
-> **AI toolkit** — a ready-made **bundle of tools** built around one system or task, plugged into the agent as a whole.
+**Prometheus**
+- `query`: выолнить PromQL запрос для конкретного момента времени
+- `range_query`: получить динамику метрики за период
 
-Instead of wiring tools in one by one, you hand the agent a whole box.
+**Проверка работы**
 
-**Example — a "GitHub" toolkit:** `create_issue` + `open_pull_request` + `list_commits` + `add_comment`. Give the agent this toolkit and it can work with GitHub as a whole.
+Так как по сути процесса деплоя нету, 
+то примем следующую условность: 
+если коммит есть в репозитории, то деплой с этим комитом уже в кластере. 
 
-**Toolkit vs MCP server (below):** a toolkit is *what* set of tools the agent is given; an MCP server is *how* those tools are delivered — as a standalone service over a standard protocol.
+Применим все манифесты необходимые для работы и закомментируем какое нибудь правило в полиси. 
+Для теста уберем сетевой доступ прометеуса к чтению политик. 
 
----
+Первым делом пришел сам алерт.
+![alert](./pictures/alert.png)
 
-## 5. MCP and MCP servers
+После этого запустился сам workflow.
+![workflow-running](./pictures/workflow_running.png)
 
-> **Model Context Protocol (MCP)** — an open standard for connecting AI models to external tools and data over a single protocol.
+Можно еще посмотреть как пыхтит моделька.
+![model-running](./pictures/model_running.png)
 
-Analogy: **MCP is like USB-C for AI** — one connector instead of a custom cable for every system. Build a tool once to the standard, and any MCP-capable agent can use it.
+Как итог был получен результат расследования агента в чате с алертами. 
+![researh](./pictures/alert_research.png)
 
-> **MCP server** — a service that exposes tools and data access to an agent over the MCP standard. Inside it is real code that talks to the actual system (a database, an API, files).
+Ресерч конечно довольно всратенький,
+но довольно нелпохо показывает куда смотреть для диагностики. 
+Этот результат был получен спустя несколько итераций правки скилла...
+Возможно модель поумнее выдала бы что-то более интересное,
+потому что с еще более нищим qwen совсем всё грустно было. 
 
-- Can be **local** (a process running next to the app) or **remote** (a networked service).
-- Created by: the services themselves (GitHub, Slack), the community, or **your own internal devops** for internal systems.
-- **Examples:** a *GitHub MCP server* exposes the GitHub toolkit's tools (`create_issue`, `list_pull_requests`, …); a *filesystem MCP server* exposes `read_file`, `write_file`, `list_directory`. One server = one system, with several tools inside.
-- **devops angle:** a remote MCP server is a real service — deploy it, update it, limit access. *Toolkit = what the agent was given; MCP server = where it's deployed and who controls it.*
+<a id="monitoring"></a>
+## 4. Мониторинг
 
-**How the layers fit together:**
+Вначале уже было описано как реализован мониторинг (через костыли).
 
-> **skill — how to act · tool — what to do · MCP server — where the tool comes from and how it reaches the real system.**
+Были добавлены графики
+- статус n8n
+- средняя продолжительность workflow
+- error rate для workflow
 
----
-
-## 6. Automation platforms
-
-Once you have tools and skills, you need to **wire them into a process**. Two paths:
-
-- **Build it yourself** — code the orchestration (flexible, but slow to build and maintain).
-- **Use a ready-made workflow-automation platform** — assemble the process from blocks, often with no code.
-
-**Examples:**
-- **No-code / low-code:** **n8n** (self-hosted), **Zapier**, **Make** (cloud, simple)
-- **AI/agent-focused:** **Dify**, **Flowise**
-
-We use **n8n** because it's no-code yet self-hostable and close to devops.
-
----
-
-## 7. n8n
-
-> **n8n** — a workflow-automation platform: a visual builder where you assemble a process from blocks ("when X happens → do Y → then Z"). Mostly no-code, and you can self-host it.
-
-**Key concepts:**
-- **Workflow** — the scenario (a chain of steps)
-- **Node** — one step: a trigger, an action, or logic
-- **Trigger** — what starts the workflow (a webhook, a schedule, an event)
-- **Execution** — one run (you can see what worked and what failed)
-
-**Example process:** an incoming request email *(trigger)* → AI parses the text *(AI node)* → a Jira ticket is created *(action)* → a Slack notification is sent *(action)*. Note it mixes AI and non-AI steps.
-
-**devops angle:** n8n has **AI and agent nodes**, so an agent can be one of the steps. n8n is the "glue" that ties agents, AI and ordinary services into one process. devops self-hosts it, guards the connected credentials, and gives it to teams.
-
----
-
-## 8. Hosting and money *(after the break)*
-
-### Self-hosted vs cloud — the main fork
-
-Where does the model "live"? Either you **call a provider's API** (cloud) or **run the model yourself** (self-hosted). There's no universal answer — it's a trade-off.
-
-**Self-hosted**
-- ✅ Data stays in-house · full control · no vendor lock-in · cheaper at large volumes
-- ❌ Needs GPUs (expensive) · hard to run and maintain · you own uptime and scaling · models usually weaker than top cloud ones
-
-**Cloud**
-- ✅ Fast start · top models · scales itself · pay-as-you-go
-- ❌ Data leaves to a provider · vendor lock-in · gets pricier as volume grows (you pay per token) · you depend on provider limits and availability
-
-### GPU
-
-Models run on **GPUs**, not ordinary servers — so your own model needs GPUs. They're **expensive**, often **scarce**, and **burn money even when idle**. So "host your own" is, first of all, a money decision.
-
-### AI gateway
-
-> **AI gateway (proxy)** — a single entry point to the models for all teams.
-
-- **Counts tokens and cost** — you can see who spent how much
-- **Controls access** — keys, rate limits, can cut someone off
-- Can **balance** requests across models/providers
-
-> **Tokens** ≈ chunks of text. You pay per token — the more text you send and receive, the more it costs. Costs creep up quietly, then the bill arrives large.
-
----
-
-## Lab
-
-[Lab 8 — Automating a DevOps process with n8n + AI](lab.md): design a real automation use-case and build it in n8n with MCP servers, an AI toolkit and skills, then run it locally.
-
-## Further reading
-
-- [What an AI agent is and what parts it's made of](https://habr.com/ru/articles/951428/) (Habr, in Russian) — a breakdown of an agent's anatomy: the LLM as the "brain", tools, prompts, memory and planning. A good complement to sections 2–3.
+![n8n-monitoring](./pictures/n8n_monitoring.png)

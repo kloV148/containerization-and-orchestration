@@ -1,0 +1,47 @@
+services:
+  prometheus-mcp:
+    image: ghcr.io/tjhop/prometheus-mcp-server:latest
+    restart: unless-stopped
+    command:
+      - --prometheus.url=${PROMETHEUS_URL:?Set PROMETHEUS_URL in .env}
+      - --mcp.transport=http
+      - --web.listen-address=:8080
+    extra_hosts:
+      - "prometheus.local:host-gateway"
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:${N8N_VERSION:-stable}
+    restart: unless-stopped
+    networks:
+      default: {}
+      k3d:
+        ipv4_address: 192.168.97.250
+    ports:
+      - "127.0.0.1:5678:5678"
+    environment:
+      DB_TYPE: sqlite
+      GENERIC_TIMEZONE: Europe/Moscow
+      TZ: Europe/Moscow
+      N8N_RESTRICT_FILE_ACCESS_TO: /files/skills;/files/output
+      N8N_METRICS: "true"
+      N8N_SECURE_COOKIE: "false"
+    volumes:
+      # SQLite, UI credentials and their automatically generated encryption key.
+      - n8n_storage:/home/node/.n8n
+      # Reading a skill into the agent prompt must be configured in the workflow.
+      - ./skills:/files/skills:ro
+      - ./output:/files/output
+      # Optional credential files; mounting does not import them into n8n.
+      - ./credentials:/run/credentials:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      # Preserve the Ingress Host while connecting through the Mac's published port.
+      - "prometheus.local:host-gateway"
+
+volumes:
+  n8n_storage:
+
+networks:
+  k3d:
+    external: true
+    name: k3d-lab-cluster

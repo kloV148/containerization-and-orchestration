@@ -1,0 +1,24 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: ai-network-policy-denied
+  namespace: observability
+  labels:
+    release: kube-prom-stack
+spec:
+  groups:
+    - name: ai-network-investigation
+      rules:
+        - alert: CiliumPolicyDeniedTraffic
+          expr: |
+            sum by (node, direction) (
+              increase(cilium_drop_count_total{job="cilium-agent",reason="Policy denied"}[1m])
+            ) > 10
+          for: 0s
+          labels:
+            severity: warning
+            investigation: network-policy
+          annotations:
+            summary: 'Policy-denied traffic on {{ $labels.node }} ({{ $labels.direction }})'
+            description: >-
+              More than 10 policy-denied packets

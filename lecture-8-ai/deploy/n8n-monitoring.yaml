@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: n8n-metrics
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: n8n
+spec:
+  ports:
+    - name: http-metrics
+      port: 5678
+      targetPort: 5678
+      protocol: TCP
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: n8n-metrics
+  namespace: observability
+  labels:
+    kubernetes.io/service-name: n8n-metrics
+    endpointslice.kubernetes.io/managed-by: lab8-manual
+addressType: IPv4
+ports:
+  - name: http-metrics
+    port: 5678
+    protocol: TCP
+endpoints:
+  - addresses:
+      - 192.168.97.250
+    conditions:
+      ready: true
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: n8n
+  namespace: observability
+  labels:
+    release: kube-prom-stack
+spec:
+  serviceDiscoveryRole: EndpointSlice
+  namespaceSelector:
+    matchNames:
+      - observability
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: n8n
+  endpoints:
+    - port: http-metrics
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
