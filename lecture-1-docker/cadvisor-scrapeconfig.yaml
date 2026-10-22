@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: lab1-vm-cadvisor
+  namespace: observability
+  labels:
+    release: kube-prom-stack
+spec:
+  scrapeInterval: 15s
+  scrapeTimeout: 10s
+  metricsPath: /metrics
+  staticConfigs:
+    - targets:
+        - 192.168.0.113:8081
+      labels:
+        job: lab1-vm
+        lab: lab1
+        host: lab1-vm

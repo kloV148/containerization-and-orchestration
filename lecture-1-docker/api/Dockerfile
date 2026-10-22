@@ -9,7 +9,14 @@ COPY . .
 
 RUN CGO_ENABLED=0 go build -o api .
 
-# Runtime stage
+# Minimal runtime stage (build with --target minimal)
+FROM scratch AS minimal
+WORKDIR /app
+COPY --from=builder /app/api /app/api
+USER 65532:65532
+ENTRYPOINT ["/app/api"]
+
+# Default runtime stage
 FROM alpine:3.24.1
 RUN addgroup -S api && adduser -S -G api api
 WORKDIR /app
